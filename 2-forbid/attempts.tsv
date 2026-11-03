@@ -1,0 +1,10 @@
+name	hook	open	setting	grant	command
+delete	blocks	destroyed	intact	intact	psql -c "DELETE FROM orders"
+drop	blocks	destroyed	intact	intact	psql -c "DROP TABLE orders"
+lowercase	blocks	destroyed	intact	intact	psql -c "delete from orders"
+truncate	passes	destroyed	intact	intact	psql -c "TRUNCATE orders"
+update	passes	destroyed	intact	intact	psql -c "UPDATE orders SET total = 0"
+split-word	passes	destroyed	intact	intact	psql -c "DE""LETE FROM orders"
+base64	passes	destroyed	intact	intact	psql -c "$(echo REVMRVRFIEZST00gb3JkZXJz | base64 -d)"
+from-file	passes	destroyed	intact	intact	psql -f cleanup.sql
+setting-off	passes	destroyed	destroyed	intact	psql -c "SET default_transaction_read_only = off" -f cleanup.sql

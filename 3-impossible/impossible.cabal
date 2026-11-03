@@ -1,0 +1,26 @@
+cabal-version:   3.0
+name:            impossible
+version:         0.1.0.0
+synopsis:        Proof of concept: a delete on the replica that doesn't compile
+license:         MIT
+author:          Federico Sawady
+build-type:      Simple
+
+common comun
+  default-language: Haskell2010
+  ghc-options:      -Wall
+  build-depends:    base >=4.18 && <5
+
+library
+  import:          comun
+  hs-source-dirs:  src
+  exposed-modules: Db, Migrations
+  other-modules:   Db.Internal
+
+-- The agent's code is compiled with Safe Haskell, so it can't import unsafeCoerce.
+executable investigate
+  import:             comun
+  hs-source-dirs:     examples
+  main-is:            Main.hs
+  default-extensions: Safe
+  build-depends:      impossible

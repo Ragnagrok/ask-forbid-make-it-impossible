@@ -1,0 +1,14 @@
+name: check
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: '9.12.2'
+          cabal-version: 'latest'
+      - run: cabal update
+      # The runner image ships PostgreSQL; check.sh starts a throwaway cluster with it.
+      - run: ./check.sh
