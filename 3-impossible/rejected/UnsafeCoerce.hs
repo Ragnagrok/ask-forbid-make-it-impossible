@@ -1,5 +1,5 @@
 {-# LANGUAGE DataKinds #-}
--- The last door: unsafeCoerce. The agent's code is compiled with Safe Haskell.
+-- The best-known door: unsafeCoerce. The agent's code is compiled with Safe Haskell.
 -- expects: Unsafe.Coerce: Can't be safely imported
 module UnsafeCoerce where
 

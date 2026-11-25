@@ -3,8 +3,9 @@
 #
 #   2-forbid      the hook blocks exactly what attempts.tsv says, and against a real Postgres
 #                 each attempt destroys or leaves the table as attempts.tsv says
-#   3-impossible  the agent's example compiles, and every file in rejected/ fails with the
-#                 error announced on its "-- expects:" line
+#   3-impossible  the agent's example compiles, every file in rejected/ fails with the
+#                 error announced on its "-- expects:" line, and every file in escapes/
+#                 compiles with the same flags, because the type doesn't cover it
 #
 # 1-ask has nothing to check. That's the point.
 set -euo pipefail
@@ -46,6 +47,14 @@ for f in rejected/*.hs; do
     ok "$f doesn't compile: $expected"
   else
     fail "$f doesn't compile, but not for the expected reason:"; echo "$output"
+  fi
+done
+for f in escapes/*.hs; do
+  if output=$(cabal exec -v0 -- ghc -XHaskell2010 -XSafe -fno-code -package impossible \
+                -outputdir "$(mktemp -d)" "$f" 2>&1); then
+    ok "$f compiles with the same flags: the type doesn't cover it"
+  else
+    fail "$f was supposed to compile:"; echo "$output"
   fi
 done
 

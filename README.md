@@ -57,7 +57,14 @@ What doesn't compile, each with the error on its `-- expects:` line:
 - `OpenTheConnection.hs`: unwrap the connection and rewrap it as read-write. The constructor isn't exported.
 - `Coerce.hs`: change only the type with `coerce`. It needs the `type role Db nominal` line, and without it, it compiles.
 - `Escalate.hs`: import the primary connection the migrations use. `Db.Internal` is a hidden module of the package.
-- `UnsafeCoerce.hs`: the last door. The agent's code is compiled with Safe Haskell.
+- `UnsafeCoerce.hs`: Haskell's best-known door. The agent's code is compiled with Safe Haskell.
+
+And what does compile, with the same flags (`escapes/`):
+
+- `ForeignShell.hs`: skip `Db` altogether. From `IO`, Safe Haskell still allows a `foreign import`
+  of C's `system`, which runs `psql -c 'DELETE ...'` in a shell. The type closes the `Db` API, not
+  everything the agent's code can do in `IO`. What stops this one is the grant: if the agent only
+  has the read-only role's credentials, the `DELETE` fails like the nine above.
 
 ## Running it
 
@@ -77,6 +84,9 @@ With Python 3, GHC 9.12, cabal, and either PostgreSQL's server binaries or Docke
   token that can't), on a different system.
 - **The types protect the code you gave the type to.** Which modules the agent's code may import
   is a boundary you still draw by hand: here, the package hides `Db.Internal`.
+- **The types cover the `Db` API, not `IO`.** Code that runs in `IO` can reach a shell through the
+  FFI (`escapes/ForeignShell.hs`) and never touch `Db`. That side is covered by permissions, which
+  is why the type and the read-only role go together.
 - **The "database" in `3-impossible` is an in-memory list.** What matters there is which programs
   type-check, not how rows are stored.
 
