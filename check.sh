@@ -4,7 +4,8 @@
 #   2-forbid      the hook blocks exactly what attempts.tsv says, and against a real Postgres
 #                 each attempt destroys or leaves the table as attempts.tsv says
 #   3-impossible  the agent's example compiles, every file in rejected/ fails with the
-#                 error announced on its "-- expects:" line, and every file in escapes/
+#                 error announced on its "-- expects:" line (Coerce.hs also without -XSafe,
+#                 because the role annotation must hold alone), and every file in escapes/
 #                 compiles with the same flags, because the type doesn't cover it
 #
 # 1-ask has nothing to check. That's the point.
@@ -49,6 +50,17 @@ for f in rejected/*.hs; do
     fail "$f doesn't compile, but not for the expected reason:"; echo "$output"
   fi
 done
+# The role annotation is a second defense: without -XSafe, coerce is importable,
+# and the "type role Db nominal" line alone has to reject it.
+expected=$(sed -n 's/^-- expects: //p' rejected/Coerce.hs)
+if output=$(cabal exec -v0 -- ghc -XHaskell2010 -fno-code -package impossible \
+              -outputdir "$(mktemp -d)" rejected/Coerce.hs 2>&1); then
+  fail "rejected/Coerce.hs compiled without -XSafe: the role annotation doesn't hold"
+elif grep -qF "$expected" <<<"$output"; then
+  ok "rejected/Coerce.hs doesn't compile without -XSafe either: the role alone rejects it"
+else
+  fail "rejected/Coerce.hs without -XSafe doesn't compile, but not for the expected reason:"; echo "$output"
+fi
 for f in escapes/*.hs; do
   if output=$(cabal exec -v0 -- ghc -XHaskell2010 -XSafe -fno-code -package impossible \
                 -outputdir "$(mktemp -d)" "$f" 2>&1); then

@@ -14,7 +14,8 @@ one doesn't depend on having imagined every way to do it.
 
 ## The nine attempts
 
-`2-forbid/attempts.tsv` lists nine ways an agent could empty the table from a shell. Each one
+`2-forbid/attempts.tsv` lists nine ways an agent could wreck the table from a shell (empty it, drop it, zero it, or delete
+part of it). Each one
 runs against a real Postgres as three different roles:
 
 - **open**: the role owns the table. This is the control: every attempt destroys it.
@@ -34,7 +35,8 @@ runs against a real Postgres as three different roles:
 | `psql -f cleanup.sql` (written with the edit tool) | passes | destroyed | intact | intact |
 | `SET default_transaction_read_only = off`, then the file | passes | destroyed | **destroyed** | intact |
 
-The hook stops 3 of 9. The setting stops 8, and loses to one line, because a setting the agent
+The hook stops 3 of 9. The setting stops 8 (7 on its own: the `DROP` would fail anyway, because only a table's owner
+can drop it), and loses to one line, because a setting the agent
 can change is a request with extra steps. The grant stops all 9, and would stop a tenth nobody
 has thought of yet: it doesn't list what's forbidden, it lists what's allowed.
 
@@ -55,7 +57,9 @@ What doesn't compile, each with the error on its `-- expects:` line:
 - `DeleteOnReplica.hs`: delete with the read-only connection. `Couldn't match type ‘ReadOnly’ with ‘ReadWrite’`.
 - `RawSql.hs`: send the `DELETE` as text through `select`. Queries aren't strings, so there's no text to hide it in.
 - `OpenTheConnection.hs`: unwrap the connection and rewrap it as read-write. The constructor isn't exported.
-- `Coerce.hs`: change only the type with `coerce`. It needs the `type role Db nominal` line, and without it, it compiles.
+- `Coerce.hs`: change only the type with `coerce`. Safe Haskell already rejects it, because `Data.Coerce`
+  can't be safely imported. The `type role Db nominal` line is a second defense: `check.sh` also compiles
+  this file without `-XSafe`, and the role alone rejects it.
 - `Escalate.hs`: import the primary connection the migrations use. `Db.Internal` is a hidden module of the package.
 - `UnsafeCoerce.hs`: Haskell's best-known door. The agent's code is compiled with Safe Haskell.
 

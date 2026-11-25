@@ -9,9 +9,10 @@ import Data.IORef
 
 data Access = ReadOnly | ReadWrite
 
--- Without this line, 'coerce' turns a read-only connection into a read-write one
--- (rejected/Coerce.hs): a phantom parameter can be swapped for free unless its
--- role says otherwise.
+-- Without this line, in code compiled without Safe Haskell, 'coerce' turns a
+-- read-only connection into a read-write one (rejected/Coerce.hs): a phantom
+-- parameter can be swapped for free unless its role says otherwise. Safe Haskell
+-- already forbids importing Data.Coerce, so this line is a second defense.
 type role Db nominal
 newtype Db (access :: Access) = Db (IORef [Order])
 
